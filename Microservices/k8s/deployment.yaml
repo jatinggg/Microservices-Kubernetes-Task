@@ -1,0 +1,324 @@
+# ============================================================
+# KUBERNETES DEPLOYMENT FOR MICROSERVICES APPLICATION
+# ============================================================
+# This file contains all Kubernetes manifests for deploying
+# User, Product, Order, and Gateway services on Minikube
+# ============================================================
+
+# ============================================================
+# 1. USER SERVICE DEPLOYMENT
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  labels:
+    app: user-service
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+        tier: backend
+    spec:
+      containers:
+      - name: user-service
+        image: jatinggg/user-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: PORT
+          value: "3000"
+        - name: SERVICE_NAME
+          value: "user-service"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+---
+# ============================================================
+# USER SERVICE - ClusterIP Service
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  labels:
+    app: user-service
+spec:
+  type: ClusterIP
+  selector:
+    app: user-service
+  ports:
+  - name: http
+    protocol: TCP
+    port: 3000
+    targetPort: 3000
+
+---
+# ============================================================
+# 2. PRODUCT SERVICE DEPLOYMENT
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  labels:
+    app: product-service
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: product-service
+  template:
+    metadata:
+      labels:
+        app: product-service
+        tier: backend
+    spec:
+      containers:
+      - name: product-service
+        image: jatinggg/product-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3001
+          name: http
+        env:
+        - name: PORT
+          value: "3001"
+        - name: SERVICE_NAME
+          value: "product-service"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3001
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+---
+# ============================================================
+# PRODUCT SERVICE - ClusterIP Service
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service
+  labels:
+    app: product-service
+spec:
+  type: ClusterIP
+  selector:
+    app: product-service
+  ports:
+  - name: http
+    protocol: TCP
+    port: 3001
+    targetPort: 3001
+
+---
+# ============================================================
+# 3. ORDER SERVICE DEPLOYMENT
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  labels:
+    app: order-service
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+        tier: backend
+    spec:
+      containers:
+      - name: order-service
+        image: jatinggg/order-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3002
+          name: http
+        env:
+        - name: PORT
+          value: "3002"
+        - name: SERVICE_NAME
+          value: "order-service"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3002
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3002
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+---
+# ============================================================
+# ORDER SERVICE - ClusterIP Service
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  labels:
+    app: order-service
+spec:
+  type: ClusterIP
+  selector:
+    app: order-service
+  ports:
+  - name: http
+    protocol: TCP
+    port: 3002
+    targetPort: 3002
+
+---
+# ============================================================
+# 4. GATEWAY SERVICE DEPLOYMENT
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-service
+  labels:
+    app: gateway-service
+    tier: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gateway-service
+  template:
+    metadata:
+      labels:
+        app: gateway-service
+        tier: frontend
+    spec:
+      containers:
+      - name: gateway-service
+        image: jatinggg/gateway-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3003
+          name: http
+        env:
+        - name: PORT
+          value: "3003"
+        - name: SERVICE_NAME
+          value: "gateway-service"
+        - name: USER_SERVICE_URL
+          value: "http://user-service:3000"
+        - name: PRODUCT_SERVICE_URL
+          value: "http://product-service:3001"
+        - name: ORDER_SERVICE_URL
+          value: "http://order-service:3002"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3003
+          initialDelaySeconds: 40
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3003
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+---
+# ============================================================
+# GATEWAY SERVICE - NodePort Service (External Access)
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-service
+  labels:
+    app: gateway-service
+spec:
+  type: NodePort
+  selector:
+    app: gateway-service
+  ports:
+  - name: http
+    protocol: TCP
+    port: 3003
+    targetPort: 3003
+    nodePort: 30003  # External access port
