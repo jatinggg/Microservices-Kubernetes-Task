@@ -1,22 +1,65 @@
-version: '3.8'
+name: microservices-task
+
+networks:
+  appnet:
+    driver: bridge
 
 services:
   user-service:
-    build: ./user-service
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
     ports:
       - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - appnet
 
   product-service:
-    build: ./product-service
+    build:
+      context: ./product-service
+      dockerfile: Dockerfile
+    container_name: product-service
     ports:
       - "3001:3001"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - appnet
 
   order-service:
-    build: ./order-service
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    container_name: order-service
     ports:
       - "3002:3002"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - appnet
+    depends_on:
+      - user-service
+      - product-service
 
-  gateway-service:
-    build: ./gateway-service
+  gateway:
+    build:
+      context: ./gateway-service
+      dockerfile: Dockerfile
+    container_name: gateway
     ports:
       - "3003:3003"
+    environment:
+      - NODE_ENV=production
+      # If your gateway reads these to route internally, keep them:
+      - USERS_URL=http://user-service:3000
+      - PRODUCTS_URL=http://product-service:3001
+      - ORDERS_URL=http://order-service:3002
+    networks:
+      - appnet
+    depends_on:
+      - user-service
+      - product-service
+      - order-service
